@@ -7,12 +7,23 @@ class DBInterface():
 	Utilzada para abstrair o banco utilizado e armazenar os cadastros da forma desejada
 	'''
 
-	def __init__(self, dbname):
+	def __init__(self, dbname, fields):
 		'''
 		Construtor da classe
+
 		* dbname : nome do banco a ser criado/carregado
+		* fields : campos do cadastro inseridos em forma de lista
 		'''
 		self.__dbname = dbname
+		self.__fields = fields
+
+		# A classe DBInterface já se encarrega de atribuir IDs ao elementos do cadastro
+		# Caso um campo ID seja adicionado em fields, a classe insere um campo de ID
+		#   adicional com um "nome" diferente para diferenciação
+		self.__idfield = 'id' if 'id' not in fields else '_id'
+
+		# Variável utilizada para rmazenar qual deve ser o ID atribuído a um novo elemento adicionado
+		self.__next_id = 1
 
 		self.__db = TinyDB(f'./tinydb_{dbname}.json')
 
@@ -24,9 +35,16 @@ class DBInterface():
 		* element : elemento a ser inserido. Deve ser um dicionário
 		'''
 		try:
-			self.__db.insert(element)
+			new_element = {}
+			new_element[self.__idfield] = self.__next_id
+			self.__next_id += 1
 
-			return 0
+			for field in self.__fields:
+				new_element[field] = element.get(field, '')
+
+			self.__db.insert(new_element)
+
+			return new_element
 
 		except Exception:
 			return -1
@@ -78,6 +96,10 @@ class DBInterface():
 		* filed_value : valor desejado para o campo da consulta
 		'''
 		try:
+			# O campoo ID do cadastro não pode ser alterado
+			if self.__idfield in fields:
+				return -1
+
 			self.__db.update(fields, Query()[field_name] == field_value)
 
 			return self.__db.search(Query()[field_name] == field_value)
@@ -91,7 +113,7 @@ if __name__ == '__main__':
 		f.seek(0)
 		f.write(b'')
 
-	db = DBInterface('dbtest')
+	db = DBInterface('dbtest', ['a', 'b'])
 
 	print(db.create_new_element({
 		'a': 1,
