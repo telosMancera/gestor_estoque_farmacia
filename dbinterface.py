@@ -22,13 +22,10 @@ class DBInterface():
 		#   adicional com um "nome" diferente para diferenciação
 		self.__idfield = 'id' if 'id' not in fields else '_id'
 
-		# Variável utilizada para rmazenar qual deve ser o ID atribuído a um novo elemento adicionado
-		self.__next_id = 1
-
 		self.__db = TinyDB(f'./tinydb_{dbname}.json')
 
 
-	def create_new_element(self, element):
+	def create_element(self, element):
 		'''
 		Adiciona um novo elemento no banco
 
@@ -36,15 +33,14 @@ class DBInterface():
 		'''
 		try:
 			new_element = {}
-			new_element[self.__idfield] = self.__next_id
-			self.__next_id += 1
-
+			new_element[self.__idfield] = ''
 			for field in self.__fields:
 				new_element[field] = element.get(field, '')
 
-			self.__db.insert(new_element)
+			tinydb_id = self.__db.insert(new_element)
+			self.__db.update({self.__idfield: tinydb_id}, doc_ids=[tinydb_id])
 
-			return new_element
+			return self.__db.get(doc_id=tinydb_id)
 
 		except Exception:
 			return -1
@@ -115,22 +111,41 @@ if __name__ == '__main__':
 
 	db = DBInterface('dbtest', ['a', 'b'])
 
-	print(db.create_new_element({
+	print('create element')
+	print(db.create_element({
 		'a': 1,
 		'b': 2
 	}))
-	print(db.create_new_element({
+	print(db.create_element({
 		'a': 10,
 		'b': 20
 	}))
 
+	print('\nget all elements')
 	print(db.get_all_elements())
 
+	print('\nget element')
 	print(db.get_element('a', 1))
 	print(db.get_element('a', 5))
 
+	print('\nupdate element')
 	print(db.update_element({'b': 15}, 'a', 10))
 	print(db.get_all_elements())
 
-	print(db.delete_element('b', 2))
+	print('\ndelete element')
+	print(db.delete_element('id', 2))
+	print(db.get_all_elements())
+
+	print('\ncreate element')
+	print(db.create_element({
+		'a': 100,
+		'b': 200
+	}))
+	print(db.get_all_elements())
+
+	print('\ncreate element')
+	print(db.create_element({
+		'a': 1000,
+		'b': 2000
+	}))
 	print(db.get_all_elements())
