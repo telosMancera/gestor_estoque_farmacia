@@ -1,0 +1,1 @@
+{"_default": {"1": {"id": 1, "name": "Cliente A", "phonenumber": "11111111", "medicines": [{"uri": "http://localhost:5000/gestor/medicines/1", "quantity": 2}]}, "2": {"id": 2, "name": "Cliente B", "phonenumber": "22222222", "medicines": []}, "3": {"id": 3, "name": "Cliente C", "phonenumber": "33333333", "medicines": []}}}
