@@ -10,7 +10,7 @@ API_CLIENTS_ROUTE = API_ROUTE + '/medicines'
 
 api = Flask(__name__)
 
-medicines = DBInterface('medicines_db', [
+medicines = DBInterface('medicines', [
 	'name',
 	'type',
 	'dosage',

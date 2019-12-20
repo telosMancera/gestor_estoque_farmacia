@@ -1,7 +1,7 @@
 # -*- coding:utf-8 -*-
 
 from tinydb import TinyDB, Query
-from services import root_dir
+from utils import root_dir
 
 
 class DBInterface():
@@ -108,11 +108,12 @@ class DBInterface():
 
 
 if __name__ == '__main__':
-	with open('tinydb_dbtest.json', 'wb') as f:
+	dbname = 'dbtest'
+	with open(f'{root_dir()}/database/{dbname}.json', 'wb') as f:
 		f.seek(0)
 		f.write(b'')
 
-	db = DBInterface('dbtest', ['a', 'b'])
+	db = DBInterface(dbname, ['a', 'b'])
 
 	print('create element')
 	print(db.create_element({
