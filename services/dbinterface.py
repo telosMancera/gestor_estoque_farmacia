@@ -1,4 +1,7 @@
+# -*- coding:utf-8 -*-
+
 from tinydb import TinyDB, Query
+from services import root_dir
 
 
 class DBInterface():
@@ -22,7 +25,7 @@ class DBInterface():
 		#   adicional com um "nome" diferente para diferenciação
 		self.__idfield = 'id' if 'id' not in fields else '_id'
 
-		self.__db = TinyDB(f'./tinydb_{dbname}.json')
+		self.__db = TinyDB(f'{root_dir()}/database/{dbname}.json')
 
 
 	def create_element(self, element):

@@ -4,7 +4,19 @@ O Gestor de estoque para farmácias consiste de uma aplicação para gerenciar m
 
 ## Organização do repositório
 
-O repositório possui todos seus arquivos na pasta raiz. A aplicação está na linguagem Python e construida na forma de uma API RESTful. Para cada cadastro da API e classe utilizada na aplicação, há um arquivo separado, sendo que para cada cadastro é feita uma "subAPI" sendo executada separadamente.
+O repositório está organizado seguindo o modelo apresentado em <https://github.com/umermansoor/microservices>.
+
+**database**
+
+Diretório onde se econtram os arquivos do banco de dados da api.
+
+**services**
+
+Aqui se encontram os serviços da API em si.
+
+**tests**
+
+Diretório destinado a armazenar os *scripts* para testes da API.
 
 ## Ambiente de desenvolvimento
 
@@ -18,7 +30,7 @@ Todos os comandos mostrados neste **README** são baseados na utilização desta
 
 Para o desenvolvimento da aplicação, optou-se utlizar a ferramenta **virtualenv**, no intuito de se isolar o ambiente do *host* e ter maior controle sobre as bibliotecas utilzadas.
 
-A seguir, serão mostradas algumas instruções para a utilização do **virutalenv**. Para maiores informações, leia a documentação completa em <https://virtualenv.pypa.io/en/latest/>
+A seguir, serão mostradas algumas instruções para a utilização do **virutalenv**. Para maiores informações, leia a documentação completa em <https://virtualenv.pypa.io/en/latest/>.
 
 **Instalação**
 
@@ -102,4 +114,9 @@ pip install tinydb
 
 Abaixo estão alguns links utilizados como referência no desenvolvimento desta aplicação
 
+* <https://github.com/umermansoor/microservices>
+* <https://virtualenv.pypa.io/en/latest/>
+* <http://flask.palletsprojects.com/en/1.1.x/>
+* <https://tinydb.readthedocs.io/en/latest/intro.html>
 * <https://blog.miguelgrinberg.com/post/designing-a-restful-api-with-python-and-flask>
+
