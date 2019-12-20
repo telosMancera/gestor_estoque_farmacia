@@ -74,7 +74,7 @@ def create_client():
 
 	Exemplo de requisição:
 
-	curl -i -H 'Content-Type: application/json' -X POST -d '{"name":"Cliente A","phonenumber":"=5516999999999"}' http://localhost:5000/gestor/clients
+	curl -i -H 'Content-Type: application/json' -X POST -d '{"name":"Cliente A","phonenumber":"+5516999999999"}' http://localhost:5000/gestor/clients
 	'''
 	global clients
 
