@@ -8,6 +8,8 @@ from dbinterface import DBInterface
 API_ROUTE = '/gestor'
 API_MEDICINES_ROUTE = API_ROUTE + '/medicines'
 
+API_MEDICINES_PORT = 5001
+
 
 api = Flask(__name__)
 
@@ -83,7 +85,7 @@ def create_medicine():
 
 	Exemplo de requisição:
 
-	curl -i -H 'Content-Type: application/json' -X POST -d '{"name":"Remedio A", "type":"Xarope", "dosage":"10mL", "price":50.0, "manufacturer":"Fabricante X"}' http://localhost:5000/gestor/medicines
+	curl -i -H 'Content-Type: application/json' -X POST -d '{"name":"Remedio A", "type":"Xarope", "dosage":"10mL", "price":50.0, "manufacturer":"Fabricante X"}' http://localhost:5001/gestor/medicines
 	'''
 	global medicines
 
@@ -130,7 +132,7 @@ def delete_medicine(medicine_id):
 
 	Exemplo de requisição:
 
-	curl -i -X DELETE http://localhost:5000/gestor/medicines/3
+	curl -i -X DELETE http://localhost:5001/gestor/medicines/3
 	'''
 	global medicines
 
@@ -155,7 +157,7 @@ def get_all_medicines():
 
 	Exemplo de requisição:
 
-	curl -i -X GET http://localhost:5000/gestor/medicines
+	curl -i -X GET http://localhost:5001/gestor/medicines
 	'''
 	global medicines
 
@@ -173,7 +175,7 @@ def get_medicine(medicine_id):
 
 	Exemplo de requisição:
 
-	curl -i -X GET http://localhost:5000/gestor/medicines/2
+	curl -i -X GET http://localhost:5001/gestor/medicines/2
 	'''
 	global medicines
 
@@ -205,7 +207,7 @@ def get_mosted_consumed_medicines():
 
 	Exemplo de requisição:
 
-	curl -i -H 'Content-Type: application/json' -X GET -d '{"most":2, "begin":"20191115", "end":"20191121"}' http://localhost:5000/gestor/medicines/mostconsumed
+	curl -i -H 'Content-Type: application/json' -X GET -d '{"most":2, "begin":"20191115", "end":"20191121"}' http://localhost:5001/gestor/medicines/mostconsumed
 	'''
 	request_json = request.json
 	if not request_json:
@@ -277,7 +279,7 @@ def update_medicine(medicine_id):
 
 	Exemplo:
 
-	curl -i -H 'Content-Type: application/json' -X PUT -d '{"name":"Novo nome", "type":"Novo tipo", "dosage":"30mL", "price":45.0, "manufacturer":"Novo fabricante", "sold":3}' http://localhost:5000/gestor/medicines/1
+	curl -i -H 'Content-Type: application/json' -X PUT -d '{"name":"Novo nome", "type":"Novo tipo", "dosage":"30mL", "price":45.0, "manufacturer":"Novo fabricante", "sold":3}' http://localhost:5001/gestor/medicines/1
 	'''
 	global medicines
 
@@ -336,7 +338,7 @@ def update_medicine_sales(medicine_id):
 
 	Exemplo de requisição:
 
-	curl -i -H 'Content-Type: application/json' -X PUT -d '{"20191220":3, "20191223":1}' http://localhost:5000/gestor/medicines/2
+	curl -i -H 'Content-Type: application/json' -X PUT -d '{"20191220":3, "20191223":1}' http://localhost:5001/gestor/medicines/2
 	'''
 	global medicines
 
@@ -375,5 +377,5 @@ def update_medicine_sales(medicine_id):
 
 
 if __name__ == '__main__':
-	api.run(debug=True)
+	api.run(port=API_MEDICINES_PORT, debug=True)
 

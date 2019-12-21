@@ -7,6 +7,8 @@ from dbinterface import DBInterface
 API_ROUTE = '/gestor'
 API_CLIENTS_ROUTE = API_ROUTE + '/clients'
 
+API_CLIENTS_PORT = 5002
+
 
 api = Flask(__name__)
 
@@ -74,7 +76,7 @@ def create_client():
 
 	Exemplo de requisição:
 
-	curl -i -H 'Content-Type: application/json' -X POST -d '{"name":"Cliente A","phonenumber":"+5516999999999"}' http://localhost:5000/gestor/clients
+	curl -i -H 'Content-Type: application/json' -X POST -d '{"name":"Cliente A","phonenumber":"+5516999999999"}' http://localhost:5002/gestor/clients
 	'''
 	global clients
 
@@ -109,7 +111,7 @@ def delete_client(client_id):
 
 	Exemplo de requisição:
 
-	curl -i -X DELETE http://localhost:5000/gestor/clients/3
+	curl -i -X DELETE http://localhost:5002/gestor/clients/3
 	'''
 	global clients
 
@@ -134,7 +136,7 @@ def get_all_clients():
 
 	Exemplo de requisição:
 
-	curl -i -X GET http://localhost:5000/gestor/clients
+	curl -i -X GET http://localhost:5002/gestor/clients
 	'''
 	global clients
 
@@ -152,7 +154,7 @@ def get_client(client_id):
 
 	Exemplo de requisição:
 
-	curl -i -X GET http://localhost:5000/gestor/clients/2
+	curl -i -X GET http://localhost:5002/gestor/clients/2
 	'''
 	global clients
 
@@ -181,7 +183,7 @@ def update_client(client_id):
 
 	Exemplo:
 
-	curl -i -H 'Content-Type: application/json' -X PUT -d '{"name":"novo nome","phonenumber":"88888888","medicines":[{"uri":"http://localhost:5000/gestor/medicines/1","quantity":2}]}' http://localhost:5000/gestor/clients/1
+	curl -i -H 'Content-Type: application/json' -X PUT -d '{"name":"novo nome","phonenumber":"88888888","medicines":[{"uri":"http://localhost:5002/gestor/medicines/1","quantity":2}]}' http://localhost:5002/gestor/clients/1
 	'''
 	global clients
 
@@ -230,5 +232,5 @@ def update_client(client_id):
 
 
 if __name__ == '__main__':
-	api.run(debug=True)
+	api.run(port=API_CLIENTS_PORT, debug=True)
 
