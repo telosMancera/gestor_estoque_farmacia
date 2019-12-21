@@ -188,6 +188,77 @@ def get_medicine(medicine_id):
 	return jsonify({'medicine': make_public_medicine(medicine[0])})
 
 
+@api.route(API_MEDICINES_ROUTE + '/mostconsumed', methods=['GET'])
+def get_mosted_consumed_medicines():
+	'''
+	Retorna os remédios mais consumidos em uma período passado. Os argumentos da pesquisa são passados via JSON.
+
+	* "most"  : número de elementos na resposta. Valor deve ser um inteiro. Caso este campo não seja passado, o método retornará todos os remédios.
+	* "begin" : início do intervalo da pesquisa. Valor deve ser uma string. Caso não seja passado, o método considerará a venda mais antiga como início.
+	* "end"   : fim do intervalo da pesquisa. Valor deve ser uma string. Caso não seja passado, o método assumirá a venda mais recente como fim.
+
+	As datas de início e fim do intervalo devem ser strings no formato "aaaammdd", sendo:
+
+	* aaaa : dígitos do ano.
+	* mm   : dígitos do mês.
+	* dd   : dígitos do dia.
+
+	Exemplo de requisição:
+
+	curl -i -H 'Content-Type: application/json' -X GET -d '{"most":2, "begin":"20191115", "end":"20191121"}' http://localhost:5000/gestor/medicines/mostconsumed
+	'''
+	request_json = request.json
+	if not request_json:
+		abort(400)
+
+	if 'most' in request_json and type(request_json['most']) != int:
+		abort(400)
+
+	if 'begin' in request_json and re.search('^\d{8}$', request_json['begin']) == None:
+		abort(400)
+
+	if 'end' in request_json and re.search('^\d{8}$', request_json['end']) == None:
+		abort(400)
+
+	most = request_json.get('most', 100)
+	begin = int(request_json.get('begin', '0'))
+	end = int(request_json.get('end', '99999999'))
+
+	minor_date = 99999999
+	major_date = 0
+	for medicine in medicines.get_all_elements():
+		sales = medicine['sales']
+		minor = min((int(date) for date in sales), default=minor_date)
+		minor_date = min(minor_date, minor)
+		major = max((int(date) for date in sales), default=major_date)
+		major_date = max(major_date, major)
+
+	# Uma vez descobertas as datas mais recente e mais remota entre todos os remédios, calcula-se o intervalo final de consulta
+	begin = max(begin, minor_date)
+	end = min(end, major_date)
+
+	ret = []
+	for medicine in medicines.get_all_elements():
+		sales = medicine['sales']
+		if sales == {}:
+			continue
+
+		sales_in_interval = [quantity for date, quantity in sales.items() if begin <= int(date) <= end]
+		quantity = sum(sales_in_interval, start=0)
+		if quantity == 0:
+			continue
+
+		d = {}
+		d['id'] = medicine['id']
+		d['name'] = medicine['name']
+		d['quantity'] = quantity
+		ret.append(make_public_medicine(d))
+
+	ret = sorted(ret, key=lambda medicine : medicine['quantity'], reverse=True)[:most]
+
+	return jsonify({'medicines': ret})
+
+
 @api.route(API_MEDICINES_ROUTE + '/<int:medicine_id>', methods=['PUT'])
 def update_medicine(medicine_id):
 	'''
@@ -284,7 +355,7 @@ def update_medicine_sales(medicine_id):
 	if type(request_json) != dict:
 		abort(400)
 
-	if any(re.search('\d{8}', key) == None for key in request_json):
+	if any(re.search('^\d{8}$', key) == None for key in request_json):
 		abort(400)
 
 	if any(type(value) != int for value in request_json.values()):
