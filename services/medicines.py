@@ -1,11 +1,12 @@
 # -*- coding:utf-8 -*-
 
+import re
 from flask import Flask, jsonify, url_for, make_response, abort, request
 from dbinterface import DBInterface
 
 
 API_ROUTE = '/gestor'
-API_CLIENTS_ROUTE = API_ROUTE + '/medicines'
+API_MEDICINES_ROUTE = API_ROUTE + '/medicines'
 
 
 api = Flask(__name__)
@@ -16,7 +17,7 @@ medicines = DBInterface('medicines', [
 	'dosage',
 	'price',
 	'manufacturer', 
-	'sold'
+	'sales'
 ])
 
 # Funções auxiliares
@@ -66,11 +67,13 @@ def internal_server_error(error):
 
 # Métodos da API
 
-@api.route(API_CLIENTS_ROUTE, methods=['POST'])
+@api.route(API_MEDICINES_ROUTE, methods=['POST'])
 def create_medicine():
 	'''
 	Cria um novo remédio no cadastro com as informações passadas.
 	Os dados do remédio sáo passados como JSON, com os seguintes campos:
+
+	* medicine_id    : ID do remédio. Valor deve ser um inteiro.
 
 	* 'name'         : nome do remédio. Valor do campo deve ser uma string. Campo obrigatório.
 	* 'type'		 : tipo do remédio. Valor deve ser uma string.
@@ -109,7 +112,7 @@ def create_medicine():
 		'dosage'		: request_json['dosage'],
 		'price'			: request_json.get('price', 0),
 		'manufacturer'	: request_json['manufacturer'],
-		'sold'			: 0
+		'sales'			: {}
 	})
 
 	if medicine == -1:
@@ -118,12 +121,12 @@ def create_medicine():
 	return jsonify({'medicine': make_public_medicine(medicine)})
 
 
-@api.route(API_CLIENTS_ROUTE + '/<int:medicine_id>', methods=['DELETE'])
+@api.route(API_MEDICINES_ROUTE + '/<int:medicine_id>', methods=['DELETE'])
 def delete_medicine(medicine_id):
 	'''
 	Deleta o remédio cadastrado com o ID passado.
 
-	* medicine_id : inteiro representando o ID do remédio.
+	* medicine_id    : ID do remédio. Valor deve ser um inteiro.
 
 	Exemplo de requisição:
 
@@ -145,7 +148,7 @@ def delete_medicine(medicine_id):
 	return jsonify({'result': True})
 
 
-@api.route(API_CLIENTS_ROUTE, methods=['GET'])
+@api.route(API_MEDICINES_ROUTE, methods=['GET'])
 def get_all_medicines():
 	'''
 	Retorna todos os remédios cadastrados.
@@ -161,12 +164,12 @@ def get_all_medicines():
 	return jsonify({'medicines': public_medicines})
 
 
-@api.route(API_CLIENTS_ROUTE + '/<int:medicine_id>', methods=['GET'])
+@api.route(API_MEDICINES_ROUTE + '/<int:medicine_id>', methods=['GET'])
 def get_medicine(medicine_id):
 	'''
 	Retorna o remédio cadastrado com o ID passado
 
-	* medicine_id : inteiro representando o ID do remédio.
+	* medicine_id    : ID do remédio. Valor deve ser um inteiro.
 
 	Exemplo de requisição:
 
@@ -185,10 +188,14 @@ def get_medicine(medicine_id):
 	return jsonify({'medicine': make_public_medicine(medicine[0])})
 
 
-@api.route(API_CLIENTS_ROUTE + '/<int:medicine_id>', methods=['PUT'])
+@api.route(API_MEDICINES_ROUTE + '/<int:medicine_id>', methods=['PUT'])
 def update_medicine(medicine_id):
 	'''
-	Atualiza o remédio cadastrado com o ID passado. O ID do remédio é passado via uri do remédio na API, enquanto que os outros dados do mesmo é passado via JSON.
+	Atualiza o remédio cadastrado com o ID passado. O ID do remédio é passado via URI do remédio na API, enquanto que os outros dados do mesmo é passado via JSON.
+
+	O campo 'sales' não é atualizado via este método. Para tal, o método update_medicine_sales é utilizado.
+
+	* medicine_id    : ID do remédio. Valor deve ser um inteiro.
 
 	* 'name'         : nome do remédio. Valor do campo deve ser uma string.
 	* 'type'		 : tipo do remédio. Valor deve ser uma string.
@@ -212,7 +219,7 @@ def update_medicine(medicine_id):
 		abort(500)
 
 	request_json = request.json
-	if not request_json :
+	if not request_json:
 		abort(400)
 
 	if 'name' in request_json and type(request_json['name']) != str:
@@ -230,10 +237,63 @@ def update_medicine(medicine_id):
 	if 'manufacturer' in request_json and type(request_json['manufacturer']) != str:
 		abort(400)
 
-	if 'sold' in request_json and type(request_json['sold']) != int:
+	request_json.pop('sales', None)
+	if medicines.update_element(request_json, 'id', medicine_id) == -1:
+		abort(500)
+
+	medicine = medicines.get_element('id', medicine_id)
+	if medicine == -1:
+		abort(500)
+
+	return jsonify({'medicine': make_public_medicine(medicine[0])})
+
+
+@api.route(API_MEDICINES_ROUTE + '/<int:medicine_id>/sales', methods=['PUT'])
+def update_medicine_sales(medicine_id):
+	'''
+	Atualiza o registro de vendas do remédio com o ID passado. O ID do remédio é passado via URI, enquanto que o registro de vendas é passado no formato JSON.
+
+	* medicine_id    : ID do remédio. Valor deve ser um inteiro.
+
+	O registro de vendas é passado no formato JSON, onde cada chave é data da venda, e o valor para a chave é a quantidade de unidades do remédio vendida nesta data. Caso a quantidade para uma data seja 0, o registro desta data é apagado.
+
+	A data deve ser uma string no formato 'aaaammdd', sendo:
+
+	* aaaa : dígitos do ano.
+	* mm   : dígitos do mês.
+	* dd   : dígitos do dia.
+
+	Exemplo de requisição:
+
+	curl -i -H 'Content-Type: application/json' -X PUT -d '{"20191220":3, "20191223":1}' http://localhost:5000/gestor/medicines/2
+	'''
+	global medicines
+
+	medicine = medicines.get_element('id', medicine_id)
+
+	if medicine == []:
+		abort(404)
+
+	if medicine == -1:
+		abort(500)
+
+	request_json = request.json
+	if not request_json:
 		abort(400)
 
-	if medicines.update_element(request_json, 'id', medicine_id) == -1:
+	if type(request_json) != dict:
+		abort(400)
+
+	if any(re.search('\d{8}', key) == None for key in request_json):
+		abort(400)
+
+	if any(type(value) != int for value in request_json.values()):
+		abort(400)
+
+	new_sales = {**medicine[0]['sales'], **request_json}
+	new_sales = {k: v for k, v in new_sales.items() if v != 0}
+
+	if medicines.update_element({'sales': new_sales}, 'id', medicine_id) == -1:
 		abort(500)
 
 	medicine = medicines.get_element('id', medicine_id)
