@@ -1,6 +1,8 @@
 # -*- coding:utf-8 -*-
 
 import re
+import csv
+from io import StringIO
 from flask import Flask, jsonify, url_for, make_response, abort, request
 from dbinterface import DBInterface
 
@@ -209,9 +211,7 @@ def get_mosted_consumed_medicines():
 
 	curl -i -H 'Content-Type: application/json' -X GET -d '{"most":2, "begin":"20191115", "end":"20191121"}' http://localhost:5001/gestor/medicines/mostconsumed
 	'''
-	request_json = request.json
-	if not request_json:
-		abort(400)
+	request_json = request.json if request.json else {}
 
 	if 'most' in request_json and type(request_json['most']) != int:
 		abort(400)
@@ -220,6 +220,9 @@ def get_mosted_consumed_medicines():
 		abort(400)
 
 	if 'end' in request_json and re.search('^\d{8}$', request_json['end']) == None:
+		abort(400)
+
+	if 'csv' in request_json and type(request_json['csv']) != int:
 		abort(400)
 
 	most = request_json.get('most', 100)
@@ -239,7 +242,7 @@ def get_mosted_consumed_medicines():
 	begin = max(begin, minor_date)
 	end = min(end, major_date)
 
-	ret = []
+	mostconsumed = []
 	for medicine in medicines.get_all_elements():
 		sales = medicine['sales']
 		if sales == {}:
@@ -254,11 +257,30 @@ def get_mosted_consumed_medicines():
 		d['id'] = medicine['id']
 		d['name'] = medicine['name']
 		d['quantity'] = quantity
-		ret.append(make_public_medicine(d))
+		mostconsumed.append(make_public_medicine(d))
 
-	ret = sorted(ret, key=lambda medicine : medicine['quantity'], reverse=True)[:most]
+	mostconsumed = sorted(mostconsumed, key=lambda medicine : medicine['quantity'], reverse=True)[:most]
 
-	return jsonify({'medicines': ret})
+	if 'csv' not in request_json or request_json['csv'] == 0:
+		return jsonify({'medicines': mostconsumed})
+
+	if mostconsumed == []:
+		abort(500)
+
+	with StringIO() as sio:
+		writer = csv.writer(sio)
+
+		# 1a linha deve conter os campos dos dicionários
+		writer.writerow(mostconsumed[0].keys())
+		# As linhas subsequentes são os dados de cada remédio
+		for medicine in mostconsumed:
+			writer.writerow(medicine.values())
+
+		response = make_response(sio.getvalue())
+		response.headers['Content-Disposition'] = 'attachment; filename=mostconsumed.csv'
+		response.headers['Content-Type'] = 'text/csv'
+
+	return response
 
 
 @api.route(API_MEDICINES_ROUTE + '/<int:medicine_id>', methods=['PUT'])
