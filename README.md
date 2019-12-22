@@ -110,6 +110,18 @@ pip install tinydb
 
 <https://tinydb.readthedocs.io/en/latest/intro.html>
 
+## PyJWT
+
+Biblioteca utilizada para geração de tokens JWT.
+
+```bash
+pip install pwjwt
+```
+
+**Documentação**
+
+<https://pyjwt.readthedocs.io/en/latest/>
+
 ## Links
 
 Abaixo estão alguns links utilizados como referência no desenvolvimento desta aplicação
@@ -119,4 +131,9 @@ Abaixo estão alguns links utilizados como referência no desenvolvimento desta 
 * <http://flask.palletsprojects.com/en/1.1.x/>
 * <https://tinydb.readthedocs.io/en/latest/intro.html>
 * <https://blog.miguelgrinberg.com/post/designing-a-restful-api-with-python-and-flask>
+* <https://stackoverflow.com/questions/26997679/writing-a-csv-from-flask-framework>
+* <http://blog.appliedinformaticsinc.com/how-to-parse-and-convert-json-to-csv-using-python/>
+* <https://medium.com/@petehouston/upload-files-with-curl-93064dcccc76>
+* <https://curl.haxx.se/docs/httpscripting.html>
+* <https://www.youtube.com/watch?v=tfKatqbZicA>
 
