@@ -2,12 +2,7 @@
 
 from flask import Flask, jsonify, url_for, make_response, abort, request
 from dbinterface import DBInterface
-
-
-API_ROUTE = '/gestor'
-API_CLIENTS_ROUTE = API_ROUTE + '/clients'
-
-API_CLIENTS_PORT = 5002
+from utils import API_CLIENTS_ROUTE, API_CLIENTS_PORT
 
 
 api = Flask(__name__)
