@@ -5,7 +5,7 @@ import csv
 from io import StringIO
 from flask import Flask, jsonify, url_for, make_response, abort, request
 from dbinterface import DBInterface
-from utils import API_MEDICINES_ROUTE, API_MEDICINES_PORT
+from utils import API_MEDICINES_ROUTE, API_MEDICINES_PORT, token_required
 
 
 api = Flask(__name__)
@@ -24,7 +24,7 @@ medicines = DBInterface('medicines', [
 def make_public_medicine(medicine):
 	'''
 	Altera a forma de exibição de um elemento do cadastro.
-	Ao invés de mostraro ID do elemento, mostra a URI do mesmo,
+	Ao invés de mostrar o ID do elemento, mostra a URI do mesmo,
 	  tornando assim mais fácil a requisição do mesmo via API.
 	'''
 	new_medicine = {}
@@ -67,7 +67,8 @@ def internal_server_error(error):
 # Métodos da API
 
 @api.route(API_MEDICINES_ROUTE, methods=['POST'])
-def create_medicine():
+@token_required
+def create_medicine(current_user):
 	'''
 	Cria um novo remédio no cadastro com as informações passadas.
 	Os dados do remédio sáo passados como JSON, com os seguintes campos:
@@ -121,7 +122,8 @@ def create_medicine():
 
 
 @api.route(API_MEDICINES_ROUTE + '/<int:medicine_id>', methods=['DELETE'])
-def delete_medicine(medicine_id):
+@token_required
+def delete_medicine(current_user, medicine_id):
 	'''
 	Deleta o remédio cadastrado com o ID passado.
 
@@ -148,7 +150,8 @@ def delete_medicine(medicine_id):
 
 
 @api.route(API_MEDICINES_ROUTE, methods=['GET'])
-def get_all_medicines():
+@token_required
+def get_all_medicines(current_user):
 	'''
 	Retorna todos os remédios cadastrados.
 
@@ -164,7 +167,8 @@ def get_all_medicines():
 
 
 @api.route(API_MEDICINES_ROUTE + '/<int:medicine_id>', methods=['GET'])
-def get_medicine(medicine_id):
+@token_required
+def get_medicine(current_user, medicine_id):
 	'''
 	Retorna o remédio cadastrado com o ID passado
 
@@ -188,7 +192,8 @@ def get_medicine(medicine_id):
 
 
 @api.route(API_MEDICINES_ROUTE + '/mostconsumed', methods=['GET'])
-def get_most_consumed_medicines():
+@token_required
+def get_most_consumed_medicines(current_user):
 	'''
 	Retorna os remédios mais consumidos em uma período passado. Os argumentos da pesquisa são passados via JSON.
 
@@ -279,7 +284,8 @@ def get_most_consumed_medicines():
 
 
 @api.route(API_MEDICINES_ROUTE + '/<int:medicine_id>', methods=['PUT'])
-def update_medicine(medicine_id):
+@token_required
+def update_medicine(current_user, medicine_id):
 	'''
 	Atualiza o remédio cadastrado com o ID passado. O ID do remédio é passado via URI do remédio na API, enquanto que os outros dados do mesmo é passado via JSON.
 
@@ -339,7 +345,8 @@ def update_medicine(medicine_id):
 
 
 @api.route(API_MEDICINES_ROUTE + '/<int:medicine_id>/sales', methods=['PUT'])
-def update_medicine_sales(medicine_id):
+@token_required
+def update_medicine_sales(current_user, medicine_id):
 	'''
 	Atualiza o registro de vendas do remédio com o ID passado. O ID do remédio é passado via URI, enquanto que o registro de vendas é passado no formato JSON.
 

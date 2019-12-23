@@ -2,7 +2,7 @@
 
 from flask import Flask, jsonify, url_for, make_response, abort, request
 from dbinterface import DBInterface
-from utils import API_CLIENTS_ROUTE, API_CLIENTS_PORT
+from utils import API_CLIENTS_ROUTE, API_CLIENTS_PORT, token_required
 
 
 api = Flask(__name__)
@@ -18,7 +18,7 @@ clients = DBInterface('clients', [
 def make_public_client(client):
 	'''
 	Altera a forma de exibição de um elemento do cadastro.
-	Ao invés de mostraro ID do elemento, mostra a URI do mesmo,
+	Ao invés de mostrar o ID do elemento, mostra a URI do mesmo,
 	  tornando assim mais fácil a requisição do mesmo via API.
 	'''
 	new_client = {}
@@ -61,7 +61,8 @@ def internal_server_error(error):
 # Métodos da API
 
 @api.route(API_CLIENTS_ROUTE, methods=['POST'])
-def create_client():
+@token_required
+def create_client(current_user):
 	'''
 	Cria um novo cliente no cadastro com as informações passadas.
 	Os dados do cliente sáo passados como JSON, com os seguintes campos:
@@ -98,7 +99,8 @@ def create_client():
 
 
 @api.route(API_CLIENTS_ROUTE + '/<int:client_id>', methods=['DELETE'])
-def delete_client(client_id):
+@token_required
+def delete_client(current_user, client_id):
 	'''
 	Deleta o cliente cadastrado com o ID passado.
 
@@ -125,7 +127,8 @@ def delete_client(client_id):
 
 
 @api.route(API_CLIENTS_ROUTE, methods=['GET'])
-def get_all_clients():
+@token_required
+def get_all_clients(current_user):
 	'''
 	Retorna todos os clientes cadastrados.
 
@@ -141,7 +144,8 @@ def get_all_clients():
 
 
 @api.route(API_CLIENTS_ROUTE + '/<int:client_id>', methods=['GET'])
-def get_client(client_id):
+@token_required
+def get_client(current_user, client_id):
 	'''
 	Retorna o cliente cadastrado com o ID passado
 
@@ -165,7 +169,8 @@ def get_client(client_id):
 
 
 @api.route(API_CLIENTS_ROUTE + '/<int:client_id>', methods=['PUT'])
-def update_client(client_id):
+@token_required
+def update_client(current_user, client_id):
 	'''
 	Atualiza o cliente cadastrado com o ID passado. O ID do cliente é passado via uri do cliente na API, enquanto que os outros dados do mesmo é passado via JSON.
 
