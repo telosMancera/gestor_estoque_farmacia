@@ -221,7 +221,7 @@ def login():
 			'id'		: user['id'],
 			'status'	: user['status'],
 			'admin'		: user['admin'],
-			'exp'		: datetime.datetime.utcnow() + datetime.timedelta(minutes=5)
+			'exp'		: datetime.datetime.utcnow() + datetime.timedelta(minutes=10)
 	}
 	key = api.config['SECRET_KEY']
 	token = jwt.encode(payload, key)
