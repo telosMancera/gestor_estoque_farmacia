@@ -4,6 +4,7 @@ import re
 import csv
 from io import StringIO
 from flask import Flask, jsonify, url_for, make_response, abort, request
+from werkzeug.utils import secure_filename
 from dbinterface import DBInterface
 from utils import API_MEDICINES_ROUTE, API_MEDICINES_PORT, token_required
 
@@ -192,14 +193,15 @@ def get_medicine(current_user, medicine_id):
 
 
 @api.route(API_MEDICINES_ROUTE + '/mostconsumed', methods=['GET'])
-@token_required
-def get_most_consumed_medicines(current_user):
+#@token_required
+def get_most_consumed_medicines():
 	'''
 	Retorna os remédios mais consumidos em uma período passado. Os argumentos da pesquisa são passados via JSON.
 
 	* "most"  : número de elementos na resposta. Valor deve ser um inteiro. Caso este campo não seja passado, o método retornará todos os remédios.
 	* "begin" : início do intervalo da pesquisa. Valor deve ser uma string. Caso não seja passado, o método considerará a venda mais antiga como início.
 	* "end"   : fim do intervalo da pesquisa. Valor deve ser uma string. Caso não seja passado, o método assumirá a venda mais recente como fim.
+	* "csv"   : flag indicando se o retorno deve ser em arquivo csv. Para retornar em arquivo, "csv" deve ter como valor o inteiro 1. Caso não seja igual a 1, ou não haja este campo, o retorno do método será no formato JSON.
 
 	As datas de início e fim do intervalo devem ser strings no formato "aaaammdd", sendo:
 
@@ -298,11 +300,10 @@ def update_medicine(current_user, medicine_id):
 	* 'dosage'		 : dosagem do remédio. Valor deve ser uma string.
 	* 'price'		 : preço do remédio. Valor deve ser um float.
 	* 'manufacturer' : fabricante do remédio. Valor deve ser uma string.
-	* 'sold'         : quantidade vendida do remédio. Valor deve ser um inteiro.
 
 	Exemplo:
 
-	curl -i -H 'Content-Type: application/json' -X PUT -d '{"name":"Novo nome", "type":"Novo tipo", "dosage":"30mL", "price":45.0, "manufacturer":"Novo fabricante", "sold":3}' http://localhost:5001/gestor/medicines/1
+	curl -i -H 'Content-Type: application/json' -X PUT -d '{"name":"Novo nome", "type":"Novo tipo", "dosage":"30mL", "price":45.0, "manufacturer":"Novo fabricante"}' http://localhost:5001/gestor/medicines/1
 	'''
 	global medicines
 
@@ -334,10 +335,7 @@ def update_medicine(current_user, medicine_id):
 		abort(400)
 
 	request_json.pop('sales', None)
-	if medicines.update_element(request_json, 'id', medicine_id) == -1:
-		abort(500)
-
-	medicine = medicines.get_element('id', medicine_id)
+	medicine = medicines.update_element(request_json, 'id', medicine_id)
 	if medicine == -1:
 		abort(500)
 
@@ -390,14 +388,140 @@ def update_medicine_sales(current_user, medicine_id):
 	new_sales = {**medicine[0]['sales'], **request_json}
 	new_sales = {k: v for k, v in new_sales.items() if v != 0}
 
-	if medicines.update_element({'sales': new_sales}, 'id', medicine_id) == -1:
-		abort(500)
-
-	medicine = medicines.get_element('id', medicine_id)
+	medicine = medicines.update_element({'sales': new_sales}, 'id', medicine_id)
 	if medicine == -1:
 		abort(500)
 
 	return jsonify({'medicine': make_public_medicine(medicine[0])})
+
+
+@api.route(API_MEDICINES_ROUTE + '/sales', methods=['POST'])
+@token_required
+def update_medicines_sales_with_csv(current_user):
+	'''
+	Atualiza o registro de venda dos remédios com um arquivo CSV.
+
+	A primeira linha do arquivo deve conter a palavra 'id' e as outras colunas devem conter as datas a serem alteradas. Nas linhas subsequentes devem-se colocar o ID do remédio na primeira coluna, e os novos valores de vendas para cada data nas outras colunas.
+
+	Caso em alguma data deseja-se manter o valor de venda atual, deixe o campo vazio. Caso a quantidade para uma data seja 0, o registro desta data é apagado.
+
+	As datas devem ser uma string no formato 'aaaammdd', sendo:
+
+	* aaaa : dígitos do ano.
+	* mm   : dígitos do mês.
+	* dd   : dígitos do dia.
+	'''
+	global medicines
+
+	csvfile = request.files['file']
+	with StringIO(csvfile.read().decode()) as sio:
+		content = list(csv.reader(sio))
+
+	keys = content[0]
+	if 'id' not in keys:
+		abort(400)
+
+	if any(re.search('^\d{8}$', key) == None for key in keys[1:]):
+		abort(400)
+
+	updatelist = [{k: v for k, v in zip(keys, values)} for values in content[1:]]
+	new_medicines = []
+	for update in updatelist:
+		medicine_id = int(update.pop('id', ''))
+		medicine = medicines.get_element('id', medicine_id)
+
+		if medicine == []:
+			abort(404)
+
+		if medicine == -1:
+			abort(500)
+
+		for date, quantity in update.items():
+			if quantity == '':
+				update[date] = medicine[0]['sales'].get(date, 0)
+
+			else:
+				try:
+					update[date] = int(quantity)
+
+				except Exception:
+					abort(400)
+
+		new_sales = {**medicine[0]['sales'], **update}
+		new_sales = {k: v for k, v in new_sales.items() if v != 0}
+
+		medicine = medicines.update_element({'sales': new_sales}, 'id', medicine_id)
+		if medicine == -1:
+			abort(500)
+
+		new_medicines.append(make_public_medicine(medicine[0]))
+
+	return jsonify({'medicines' : new_medicines})
+
+
+@api.route(API_MEDICINES_ROUTE + '/update', methods=['POST'])
+@token_required
+def update_medicines_with_csv(current_user):
+	'''
+	Atualiza o banco de dados dos remédios com um arquivo CSV.
+
+	A primeira linha deve conter a palavra 'id' e as outras colunas devem conter os nomes dos campos a serem alterados. Nas linhas subsequentes devem-se colocar o ID do remédio na primeira coluna, e os novos valores para cada campo nas outras colunas.
+
+	* 'name'         : nome do remédio. Valor do campo deve ser uma string.
+	* 'type'		 : tipo do remédio. Valor deve ser uma string.
+	* 'dosage'		 : dosagem do remédio. Valor deve ser uma string.
+	* 'price'		 : preço do remédio. Valor deve ser um float.
+	* 'manufacturer' : fabricante do remédio. Valor deve ser uma string.
+	'''
+	global medicines
+
+	csvfile = request.files['file']
+	with StringIO(csvfile.read().decode()) as sio:
+		content = list(csv.reader(sio))
+
+	keys = content[0]
+	if 'id' not in keys:
+		abort(400)
+
+	updatelist = [{k: v for k, v in zip(keys, values)} for values in content[1:]]
+	new_medicines = []
+	for update in updatelist:
+		medicine_id = int(update.pop('id', ''))
+		medicine = medicines.get_element('id', medicine_id)
+		if medicine == []:
+			abort(404)
+
+		if medicine == -1:
+			abort(500)
+
+		if 'name' in update and type(update['name']) != str:
+			abort(400)
+
+		if 'type' in update and type(update['type']) != str:
+			abort(400)
+
+		if 'dosage' in update and type(update['dosage']) != str:
+			abort(400)
+
+		if 'price' in update and update['price'] != '':
+			try:
+				update['price'] = float(update['price'])
+
+			except Exception:
+				abort(400)
+
+		if 'manufacturer' in update and type(update['manufacturer']) != str:
+			abort(400)
+
+		update = {k: v for k, v in update.items() if v != ''}
+
+		medicine = medicines.update_element(update, 'id', medicine_id)
+		if medicine == -1:
+			abort(500)
+
+		new_medicines.append(make_public_medicine(medicine[0]))
+
+	return jsonify({'medicines' : new_medicines})
 
 
 if __name__ == '__main__':
