@@ -26,20 +26,41 @@ def root_dir():
 
 
 def token_required(func):
+	'''
+	Força a validação via token JWT no método passado.
+
+	* func : método a receber a validação via token.
+
+	O método deve possuir como primeiro argumento, o usuário corrente (current_user).
+
+	O token deve ser passado para a URI através da chave 'x-access-token' no cabeçalho da requisição.
+	'''
 	@wraps(func)
 	def decorated(*args, **kwargs):
-		request_json = request.json
-		if not request_json or 'token' not in request_json or request_json['token'] == '':
+		token = None
+
+		if 'x-access-token' in request.headers:
+			token = request.headers.get('x-access-token', None)
+
+		if not token:
 			return jsonify({'message': 'Token is missing!'}), 403
 
-		token = request_json['token']
 		try:
 			data = jwt.decode(token, SECRET_KEY)
 
 		except Exception:
 			return jsonify({'message': 'Token is invalid!'}), 403
 
-		return func(*args, **kwargs)
+		current_user = {
+				'id'		: data['id'],
+				'status'	: data['status'],
+				'admin'		: data['admin']
+		}
+
+		if not current_user['admin'] and current_user['status'] == 'inactive':
+			return jsonify({'message': 'You are inactive!'}), 403
+
+		return func(current_user, *args, **kwargs)
 
 	return decorated
 
