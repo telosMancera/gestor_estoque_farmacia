@@ -122,13 +122,13 @@ def create_medicine(current_user):
 	return jsonify({'medicine': make_public_medicine(medicine)})
 
 
-@api.route(API_MEDICINES_ROUTE + '/<int:medicine_id>', methods=['DELETE'])
+@api.route(API_MEDICINES_ROUTE + '/<medicine_id>', methods=['DELETE'])
 @token_required
 def delete_medicine(current_user, medicine_id):
 	'''
 	Deleta o remédio cadastrado com o ID passado.
 
-	* medicine_id    : ID do remédio. Valor deve ser um inteiro.
+	* medicine_id    : ID do remédio.
 
 	Exemplo de requisição:
 
@@ -167,13 +167,13 @@ def get_all_medicines(current_user):
 	return jsonify({'medicines': public_medicines})
 
 
-@api.route(API_MEDICINES_ROUTE + '/<int:medicine_id>', methods=['GET'])
+@api.route(API_MEDICINES_ROUTE + '/<medicine_id>', methods=['GET'])
 @token_required
 def get_medicine(current_user, medicine_id):
 	'''
 	Retorna o remédio cadastrado com o ID passado
 
-	* medicine_id    : ID do remédio. Valor deve ser um inteiro.
+	* medicine_id    : ID do remédio.
 
 	Exemplo de requisição:
 
@@ -285,7 +285,7 @@ def get_most_consumed_medicines():
 	return response
 
 
-@api.route(API_MEDICINES_ROUTE + '/<int:medicine_id>', methods=['PUT'])
+@api.route(API_MEDICINES_ROUTE + '/<medicine_id>', methods=['PUT'])
 @token_required
 def update_medicine(current_user, medicine_id):
 	'''
@@ -293,7 +293,7 @@ def update_medicine(current_user, medicine_id):
 
 	O campo 'sales' não é atualizado via este método. Para tal, o método update_medicine_sales é utilizado.
 
-	* medicine_id    : ID do remédio. Valor deve ser um inteiro.
+	* medicine_id    : ID do remédio.
 
 	* 'name'         : nome do remédio. Valor do campo deve ser uma string.
 	* 'type'		 : tipo do remédio. Valor deve ser uma string.
@@ -342,13 +342,13 @@ def update_medicine(current_user, medicine_id):
 	return jsonify({'medicine': make_public_medicine(medicine[0])})
 
 
-@api.route(API_MEDICINES_ROUTE + '/<int:medicine_id>/sales', methods=['PUT'])
+@api.route(API_MEDICINES_ROUTE + '/<medicine_id>/sales', methods=['PUT'])
 @token_required
 def update_medicine_sales(current_user, medicine_id):
 	'''
 	Atualiza o registro de vendas do remédio com o ID passado. O ID do remédio é passado via URI, enquanto que o registro de vendas é passado no formato JSON.
 
-	* medicine_id    : ID do remédio. Valor deve ser um inteiro.
+	* medicine_id    : ID do remédio.
 
 	O registro de vendas é passado no formato JSON, onde cada chave é data da venda, e o valor para a chave é a quantidade de unidades do remédio vendida nesta data. Caso a quantidade para uma data seja 0, o registro desta data é apagado.
 
@@ -427,7 +427,7 @@ def update_medicines_sales_with_csv(current_user):
 	updatelist = [{k: v for k, v in zip(keys, values)} for values in content[1:]]
 	new_medicines = []
 	for update in updatelist:
-		medicine_id = int(update.pop('id', ''))
+		medicine_id = update.pop('id', '')
 		medicine = medicines.get_element('id', medicine_id)
 
 		if medicine == []:
@@ -486,7 +486,7 @@ def update_medicines_with_csv(current_user):
 	updatelist = [{k: v for k, v in zip(keys, values)} for values in content[1:]]
 	new_medicines = []
 	for update in updatelist:
-		medicine_id = int(update.pop('id', ''))
+		medicine_id = update.pop('id', '')
 		medicine = medicines.get_element('id', medicine_id)
 		if medicine == []:
 			abort(404)

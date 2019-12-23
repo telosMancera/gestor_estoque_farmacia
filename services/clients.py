@@ -98,13 +98,13 @@ def create_client(current_user):
 	return jsonify({'client': make_public_client(client)})
 
 
-@api.route(API_CLIENTS_ROUTE + '/<int:client_id>', methods=['DELETE'])
+@api.route(API_CLIENTS_ROUTE + '/<client_id>', methods=['DELETE'])
 @token_required
 def delete_client(current_user, client_id):
 	'''
 	Deleta o cliente cadastrado com o ID passado.
 
-	* client_id : inteiro representando o ID do cliente.
+	* client_id : ID do cliente.
 
 	Exemplo de requisição:
 
@@ -143,13 +143,13 @@ def get_all_clients(current_user):
 	return jsonify({'clients': public_clients})
 
 
-@api.route(API_CLIENTS_ROUTE + '/<int:client_id>', methods=['GET'])
+@api.route(API_CLIENTS_ROUTE + '/<client_id>', methods=['GET'])
 @token_required
 def get_client(current_user, client_id):
 	'''
 	Retorna o cliente cadastrado com o ID passado
 
-	* client_id : inteiro representando o ID do cliente.
+	* client_id : ID do cliente.
 
 	Exemplo de requisição:
 
@@ -168,13 +168,14 @@ def get_client(current_user, client_id):
 	return jsonify({'client': make_public_client(client[0])})
 
 
-@api.route(API_CLIENTS_ROUTE + '/<int:client_id>', methods=['PUT'])
+@api.route(API_CLIENTS_ROUTE + '/<client_id>', methods=['PUT'])
 @token_required
 def update_client(current_user, client_id):
 	'''
 	Atualiza o cliente cadastrado com o ID passado. O ID do cliente é passado via uri do cliente na API, enquanto que os outros dados do mesmo é passado via JSON.
 
-	* client_id : inteiro representando o ID do cliente
+	* client_id     : ID do cliente
+	
 	* 'name'        : nome do cliente. Valor do campo deve ser uma string.
 	* 'phonenumber' : número do telefone do cliente. Valor do campo deve ser uma string.
 	* 'medicines'   : remédios comprados pelo cliente. medicines deve ser uma lista de dicionários, sendo que cada dicionário deve apresentar os campos 'uri' e 'quantity'.
