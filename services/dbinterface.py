@@ -1,5 +1,6 @@
 # -*- coding:utf-8 -*-
 
+import uuid
 from tinydb import TinyDB, Query
 from utils import root_dir
 
@@ -36,12 +37,11 @@ class DBInterface():
 		'''
 		try:
 			new_element = {}
-			new_element[self.__idfield] = ''
+			new_element[self.__idfield] = str(uuid.uuid4())
 			for field in self.__fields:
 				new_element[field] = element.get(field, '')
 
 			tinydb_id = self.__db.insert(new_element)
-			self.__db.update({self.__idfield: tinydb_id}, doc_ids=[tinydb_id])
 
 			return self.__db.get(doc_id=tinydb_id)
 
