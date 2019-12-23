@@ -112,6 +112,8 @@ def activate_user(current_user, user_id):
 	if user == -1:
 		abort(500)
 
+	user[0].pop('password', None)
+
 	return jsonify({'user': make_public_user(user[0])})
 
 
@@ -144,6 +146,8 @@ def deactivate_user(current_user, user_id):
 	user = users.get_element('id', user_id)
 	if user == -1:
 		abort(500)
+
+	user[0].pop('password', None)
 
 	return jsonify({'user': make_public_user(user[0])})
 
