@@ -42,6 +42,14 @@ def bad_request(error):
 	return make_response(jsonify({'error': 'Bad request'}), 400)
 
 
+@api.errorhandler(403)
+def forbidden(error):
+	'''
+	Altera o retorno para erros tipo 403 para o formato JSON.
+	'''
+	return make_response(jsonify({'error': 'Forbidden'}), 403)
+
+
 @api.errorhandler(404)
 def not_found(error):
 	'''
@@ -56,6 +64,14 @@ def internal_server_error(error):
 	Altera o retorno para erros tipo 500 para o formato JSON.
 	'''
 	return make_response(jsonify({'error': 'Internal Server Error'}), 500)
+
+
+@api.errorhandler(501)
+def not_implemented(error):
+	'''
+	Altera o retorno para erros tipo 501 para o formato JSON.
+	'''
+	return make_response(jsonify({'error': 'Not implemented'}), 501)
 
 
 # Métodos da API
@@ -175,7 +191,7 @@ def update_client(current_user, client_id):
 	Atualiza o cliente cadastrado com o ID passado. O ID do cliente é passado via uri do cliente na API, enquanto que os outros dados do mesmo é passado via JSON.
 
 	* client_id     : ID do cliente
-	
+
 	* 'name'        : nome do cliente. Valor do campo deve ser uma string.
 	* 'phonenumber' : número do telefone do cliente. Valor do campo deve ser uma string.
 	* 'medicines'   : remédios comprados pelo cliente. medicines deve ser uma lista de dicionários, sendo que cada dicionário deve apresentar os campos 'uri' e 'quantity'.

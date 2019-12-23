@@ -49,6 +49,14 @@ def bad_request(error):
 	return make_response(jsonify({'error': 'Bad request'}), 400)
 
 
+@api.errorhandler(403)
+def forbidden(error):
+	'''
+	Altera o retorno para erros tipo 403 para o formato JSON.
+	'''
+	return make_response(jsonify({'error': 'Forbidden'}), 403)
+
+
 @api.errorhandler(404)
 def not_found(error):
 	'''
@@ -63,6 +71,14 @@ def internal_server_error(error):
 	Altera o retorno para erros tipo 500 para o formato JSON.
 	'''
 	return make_response(jsonify({'error': 'Internal Server Error'}), 500)
+
+
+@api.errorhandler(501)
+def not_implemented(error):
+	'''
+	Altera o retorno para erros tipo 501 para o formato JSON.
+	'''
+	return make_response(jsonify({'error': 'Not implemented'}), 501)
 
 
 # Métodos da API

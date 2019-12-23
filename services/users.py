@@ -51,6 +51,14 @@ def bad_request(error):
 	return make_response(jsonify({'error': 'Bad request'}), 400)
 
 
+@api.errorhandler(403)
+def forbidden(error):
+	'''
+	Altera o retorno para erros tipo 403 para o formato JSON.
+	'''
+	return make_response(jsonify({'error': 'Forbidden'}), 403)
+
+
 @api.errorhandler(404)
 def not_found(error):
 	'''
@@ -67,6 +75,14 @@ def internal_server_error(error):
 	return make_response(jsonify({'error': 'Internal Server Error'}), 500)
 
 
+@api.errorhandler(501)
+def not_implemented(error):
+	'''
+	Altera o retorno para erros tipo 501 para o formato JSON.
+	'''
+	return make_response(jsonify({'error': 'Not implemented'}), 501)
+
+
 # Métodos da API
 
 @api.route(API_USERS_ROUTE + '/<user_id>/activate', methods=['PUT'])
@@ -74,11 +90,13 @@ def internal_server_error(error):
 def activate_user(current_user, user_id):
 	'''
 	Ativa o usúario com o ID passado.
+
+	* user_id : ID do usuário.
 	'''
 	global users
 
 	if not current_user['admin']:
-		return jsonify({'message': 'You don\'t have permission for that!'})
+		abort(403)
 
 	user = users.get_element('id', user_id)
 	if user == []:
@@ -102,11 +120,13 @@ def activate_user(current_user, user_id):
 def deactivate_user(current_user, user_id):
 	'''
 	Desativa o usúario com o ID passado.
+
+	* user_id : ID do usuário.
 	'''
 	global users
 
 	if not current_user['admin']:
-		return jsonify({'message': 'You don\'t have permission for that!'})
+		abort(403)
 
 	user = users.get_element('id', user_id)
 	if user == []:
@@ -133,11 +153,13 @@ def deactivate_user(current_user, user_id):
 def delete_user(current_user, user_id):
 	'''
 	Deleta o usuário com o ID passado.
+
+	* user_id : ID do usuário.
 	'''
 	global users
 
 	if not current_user['admin']:
-		return jsonify({'message': 'You don\'t have permission for that!'})
+		abort(403)
 
 	user = users.get_element('id', user_id)
 	if user == []:
@@ -164,9 +186,12 @@ def get_all_users(current_user):
 	global users
 
 	if not current_user['admin']:
-		return jsonify({'message': 'You don\'t have permission for that!'})
+		abort(403)
 
-	public_users = [make_public_user(user) for user in users.get_all_elements()]
+	public_users = []
+	for user in users.get_all_elements():
+		user.pop('password', None)
+		public_users.append(make_public_user(user))
 
 	return jsonify({'users': public_users})
 
@@ -176,11 +201,13 @@ def get_all_users(current_user):
 def get_user(current_user, user_id):
 	'''
 	Retorna o usuário com o ID passado.
+
+	* user_id : ID do usuário.
 	'''
 	global users
 
 	if not current_user['admin']:
-		return jsonify({'message': 'You don\'t have permission for that!'})
+		abort(403)
 
 	user = users.get_element('id', user_id)
 	if user == []:
@@ -189,13 +216,17 @@ def get_user(current_user, user_id):
 	if user == -1:
 		abort(500)
 
+	user[0].pop('password', None)
+
 	return jsonify({'user': make_public_user(user[0])})
 
 
 @api.route(API_ROUTE + '/login', methods=['POST'])
 def login():
 	'''
-	Realiza o login na API para receber o token
+	Realiza o login na API para receber o token.
+
+	Os dados de usuário e senha devem ser passados no cabeçalho da requisição como valor da chave Authorization utilizando autorização tipo Basic Auth.
 	'''
 	global users
 
@@ -234,11 +265,13 @@ def login():
 def promote_user(current_user, user_id):
 	'''
 	Promove o usuário com o ID passado para amdin.
+
+	* user_id : ID do usuário.
 	'''
 	global users
 
 	if not current_user['admin']:
-		return jsonify({'message': 'You don\'t have permission for that!'})
+		abort(403)
 
 	user = users.get_element('id', user_id)
 	if user == []:
@@ -260,25 +293,25 @@ def promote_user(current_user, user_id):
 @api.route(API_ROUTE + '/register', methods=['POST'])
 def register():
 	'''
-	Cadastra um novo usuário
+	Cadastra um novo usuário.
+
+	Os dados de usuário e senha devem ser passados no cabeçalho da requisição como valor da chave Authorization utilizando autorização tipo Basic Auth.
 	'''
 	global users
 
-	request_json = request.json
-	if not request_json:
+	auth = request.authorization
+	if not auth:
 		abort(400)
 
-	username = request_json.get('username', '')
-	if not username or type(username) != str:
+	username, password = auth.username, auth.password
+	if username == '' or type(username) != str:
 		abort(400)
 
-	password = request_json.get('password', '')
-	if not password or type(password) != str:
+	if password == '' or type(password) != str:
 		abort(400)
 
-	user = users.get_element('username', username)
-	if user != []:
-		abort(501)
+	if users.get_element('username', username) != []:
+		return make_response({'message': 'Username already exists'}, 400)
 
 	user = users.create_element({
 		'username'	: username,
@@ -290,26 +323,27 @@ def register():
 	if user == -1:
 		abort(500)
 
-	return make_response('User registered sucessfully!', 200)
+	return make_response({'message': 'User registered sucessfully!'}, 200)
 
 @api.route(API_ROUTE + '/selfupdate', methods=['PUT'])
 @token_required
 def self_update(current_user):
 	'''
 	Altera os dados do usuário.
+
+	Os novos dados de usuário e senha devem ser passados no cabeçalho da requisição como valor da chave Authorization utilizando autorização tipo Basic Auth.
 	'''
 	global users
 
-	request_json = request.json
-	if not request_json:
+	auth = request.authorization
+	if not auth:
 		abort(400)
 
-	username = request_json.get('username', '')
-	if username and type(username) != str:
+	username, password = auth.username, auth.password
+	if type(username) != str or type(password) != str:
 		abort(400)
 
-	password = request_json.get('password', '')
-	if password and type(password) != str:
+	if username == '' and password == '':
 		abort(400)
 
 	user = users.get_element('id', current_user['id'])
@@ -320,15 +354,18 @@ def self_update(current_user):
 		abort(500)
 
 	user = user[0]
+	if username != user['username'] and users.get_element('username', username) != []:
+		return make_response({'message': 'Username already exists'}, 400)
+
 	new_values = {
 		'username'	: username if username else user['username'],
-		'password'	: generate_password_hash(password, method='sha256') if password else user['username']
+		'password'	: generate_password_hash(password, method='sha256') if password else user['password']
 	}
 	user = users.update_element(new_values, 'id', current_user['id'])
 	if user == -1:
 		abort(500)
 
-	return make_response('User updated sucessfully!', 200)
+	return make_response({'message': 'User updated sucessfully!'}, 200)
 
 
 if __name__ == '__main__':
