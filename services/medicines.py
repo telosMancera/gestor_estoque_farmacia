@@ -417,6 +417,8 @@ def update_medicines_sales_with_csv(current_user):
 	'''
 	Atualiza o registro de venda dos remédios com um arquivo CSV.
 
+	O arquivo deve ser mandado no corpo da requisição como um input de um formulário, sendo este input tipo 'file' e chamado 'file'. Além disso, o formulário deve ter o atributo enctype com valor multipart/form-data.
+
 	A primeira linha do arquivo deve conter a palavra 'id' e as outras colunas devem conter as datas a serem alteradas. Nas linhas subsequentes devem-se colocar o ID do remédio na primeira coluna, e os novos valores de vendas para cada data nas outras colunas.
 
 	Caso em alguma data deseja-se manter o valor de venda atual, deixe o campo vazio. Caso a quantidade para uma data seja 0, o registro desta data é apagado.
@@ -480,6 +482,8 @@ def update_medicines_sales_with_csv(current_user):
 def update_medicines_with_csv(current_user):
 	'''
 	Atualiza o banco de dados dos remédios com um arquivo CSV.
+
+	O arquivo deve ser mandado no corpo da requisição como um input de um formulário, sendo este input tipo 'file' e chamado 'file'. Além disso, o formulário deve ter o atributo enctype com valor multipart/form-data.
 
 	A primeira linha deve conter a palavra 'id' e as outras colunas devem conter os nomes dos campos a serem alterados. Nas linhas subsequentes devem-se colocar o ID do remédio na primeira coluna, e os novos valores para cada campo nas outras colunas.
 
